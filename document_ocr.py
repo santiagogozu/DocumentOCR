@@ -278,7 +278,7 @@
 #         return None
 
 # if __name__ == '__main__':
-#     file_path = sys.argv[1]
+#     file_path = sys.argv[1]a
 #     print('Archivo procesado:', file_path)
 #     text = get_handwritten_text_from_image(file_path)
 #     print('\nTexto detectado:\n')
