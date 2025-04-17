@@ -224,145 +224,162 @@
 #     print(text)
 
 
-
-# import os
-# import sys
-# from dotenv import load_dotenv
-# from google.cloud import vision_v1p3beta1 as vision  # Versión específica para manuscritos
-
-# # Cargar variables del archivo .env
-# load_dotenv()
-
-# # Establecer variable de entorno con la ruta del archivo de credenciales
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-
-# def get_handwritten_text_from_image(file_path):
-#     try:
-#         # Crear cliente de la API de Vision
-#         client = vision.ImageAnnotatorClient()
-
-#         # Leer la imagen en binario
-#         with open(file_path, "rb") as image_file:
-#             content = image_file.read()
-
-#         image = vision.Image(content=content)
-
-#         # Indicar que esperas texto manuscrito en español TENER EN CUENTA QUE ESTA EN BETA SEGUN INFORMACION DE GOOGLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#         image_context = vision.ImageContext(language_hints=["es-t-i0-handwrit"])
-
-#         # Usar document_text_detection con contexto de idioma manuscrito
-#         response = client.document_text_detection(image=image, image_context=image_context)
-
-#         # Verificar errores
-#         if response.error.message:
-#             raise Exception(response.error.message)
-
-#         # Extraer anotaciones de texto completas
-#         full_text = response.full_text_annotation
-
-#         lines = []
-#         for page in full_text.pages:
-#             for block in page.blocks:
-#                 for paragraph in block.paragraphs:
-#                     line_text = ""
-#                     for word in paragraph.words:
-#                         word_text = ''.join([symbol.text for symbol in word.symbols])
-#                         line_text += word_text + " "
-#                     lines.append(line_text.strip())
-
-#         # Unir las líneas en un solo string
-#         return "\n".join(lines)
-
-#     except Exception as e:
-#         print("Error:", e)
-#         return None
-
-# if __name__ == '__main__':
-#     file_path = sys.argv[1]a
-#     print('Archivo procesado:', file_path)
-#     text = get_handwritten_text_from_image(file_path)
-#     print('\nTexto detectado:\n')
-#     print(text)
-
-
 import os
 import sys
 from dotenv import load_dotenv
-from google.cloud import vision_v1p3beta1 as vision  # Specific version for handwriting support
+from google.cloud import (
+    vision_v1p3beta1 as vision,
+)  # Versión específica para manuscritos
 
-# Load environment variables from .env file
+# Cargar variables del archivo .env
 load_dotenv()
 
-# Set the credentials path from environment variable
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+# Establecer variable de entorno con la ruta del archivo de credenciales
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
+    "GOOGLE_APPLICATION_CREDENTIALS"
+)
 
-def get_handwritten_text_from_image(file_path, y_threshold=15):
+
+def get_handwritten_text_from_image(file_path):
     try:
-        # Initialize the Google Cloud Vision client
+        # Crear cliente de la API de Vision
         client = vision.ImageAnnotatorClient()
 
-        # Read the image file as binary
+        # Leer la imagen en binario
         with open(file_path, "rb") as image_file:
             content = image_file.read()
 
         image = vision.Image(content=content)
 
-        # Set language hint to detect Spanish handwriting
+        # Indicar que esperas texto manuscrito en español TENER EN CUENTA QUE ESTA EN BETA SEGUN INFORMACION DE GOOGLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         image_context = vision.ImageContext(language_hints=["es-t-i0-handwrit"])
 
-        # Perform text detection optimized for documents (and handwriting)
-        response = client.document_text_detection(image=image, image_context=image_context)
+        # Usar document_text_detection con contexto de idioma manuscrito
+        response = client.document_text_detection(
+            image=image, image_context=image_context
+        )
 
-        # Raise an exception if there's an error in the response
+        # Verificar errores
         if response.error.message:
             raise Exception(response.error.message)
 
-        # Get the full text annotation
+        # Extraer anotaciones de texto completas
         full_text = response.full_text_annotation
 
-        # Store words with their text and coordinates
-        word_list = []
-
+        lines = []
         for page in full_text.pages:
             for block in page.blocks:
                 for paragraph in block.paragraphs:
+                    line_text = ""
                     for word in paragraph.words:
-                        word_text = ''.join([symbol.text for symbol in word.symbols])
-                        x = word.bounding_box.vertices[0].x
-                        y = word.bounding_box.vertices[0].y
-                        word_list.append({'text': word_text, 'x': x, 'y': y})
+                        word_text = "".join([symbol.text for symbol in word.symbols])
+                        line_text += word_text + " "
+                    lines.append(line_text.strip())
 
-        # Group words into lines based on Y position (vertical closeness)
-        lines = []
-        for word in word_list:
-            added = False
-            for line in lines:
-                if abs(line['y'] - word['y']) < y_threshold:
-                    line['words'].append(word)
-                    added = True
-                    break
-            if not added:
-                lines.append({'y': word['y'], 'words': [word]})
-
-        # Sort lines by Y (top to bottom)
-        lines.sort(key=lambda l: l['y'])
-
-        # Sort words in each line by X (left to right)
-        for line in lines:
-            line['words'].sort(key=lambda w: w['x'])
-
-        # Reconstruct the text from the sorted words
-        ordered_text = "\n".join([' '.join([w['text'] for w in line['words']]) for line in lines])
-
-        return ordered_text
+        # Unir las líneas en un solo string
+        return "\n".join(lines)
 
     except Exception as e:
         print("Error:", e)
         return None
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     file_path = sys.argv[1]
-    print('Processed file:', file_path)
+    print("Archivo procesado:", file_path)
     text = get_handwritten_text_from_image(file_path)
-    print('\nDetected text (ordered by position):\n')
+    print("\nTexto detectado:\n")
     print(text)
+
+
+# import os
+# import sys
+# from dotenv import load_dotenv
+# from google.cloud import (
+#     vision_v1p3beta1 as vision,
+# )  # Specific version for handwriting support
+
+# # Load environment variables from .env file
+# load_dotenv()
+
+# # Set the credentials path from environment variable
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
+#     "GOOGLE_APPLICATION_CREDENTIALS"
+# )
+
+
+# def get_handwritten_text_from_image(file_path, y_threshold=15):
+#     try:
+#         # Initialize the Google Cloud Vision client
+#         client = vision.ImageAnnotatorClient()
+
+#         # Read the image file as binary
+#         with open(file_path, "rb") as image_file:
+#             content = image_file.read()
+
+#         image = vision.Image(content=content)
+
+#         # Set language hint to detect Spanish handwriting
+#         image_context = vision.ImageContext(language_hints=["es-t-i0-handwrit"])
+
+#         # Perform text detection optimized for documents (and handwriting)
+#         response = client.document_text_detection(
+#             image=image, image_context=image_context
+#         )
+
+#         # Raise an exception if there's an error in the response
+#         if response.error.message:
+#             raise Exception(response.error.message)
+
+#         # Get the full text annotation
+#         full_text = response.full_text_annotation
+
+#         # Store words with their text and coordinates
+#         word_list = []
+
+#         for page in full_text.pages:
+#             for block in page.blocks:
+#                 for paragraph in block.paragraphs:
+#                     for word in paragraph.words:
+#                         word_text = "".join([symbol.text for symbol in word.symbols])
+#                         x = word.bounding_box.vertices[0].x
+#                         y = word.bounding_box.vertices[0].y
+#                         word_list.append({"text": word_text, "x": x, "y": y})
+
+#         # Group words into lines based on Y position (vertical closeness)
+#         lines = []
+#         for word in word_list:
+#             added = False
+#             for line in lines:
+#                 if abs(line["y"] - word["y"]) < y_threshold:
+#                     line["words"].append(word)
+#                     added = True
+#                     break
+#             if not added:
+#                 lines.append({"y": word["y"], "words": [word]})
+
+#         # Sort lines by Y (top to bottom)
+#         lines.sort(key=lambda l: l["y"])
+
+#         # Sort words in each line by X (left to right)
+#         for line in lines:
+#             line["words"].sort(key=lambda w: w["x"])
+
+#         # Reconstruct the text from the sorted words
+#         ordered_text = "\n".join(
+#             [" ".join([w["text"] for w in line["words"]]) for line in lines]
+#         )
+
+#         return ordered_text
+
+#     except Exception as e:
+#         print("Error:", e)
+#         return None
+
+
+# if __name__ == "__main__":
+#     file_path = sys.argv[1]
+#     print("Processed file:", file_path)
+#     text = get_handwritten_text_from_image(file_path)
+#     print("\nDetected text (ordered by position):\n")
+#     print(text)

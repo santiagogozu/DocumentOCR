@@ -1,4 +1,0 @@
-project_id: ocrtesting-456216 
-peocesador_id : 2386c493d0ebb71d
-endpoint : us-documentai.googleapis.com
-endpoint : https://us-documentai.googleapis.com/v1/projects/514543088688/locations/us/processors/2386c493d0ebb71d:process
